@@ -1,0 +1,51 @@
+# ----------------------------------------------
+# MySQL Service (Internal)
+# ----------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  selector:
+    app: mysql
+  ports:
+  - protocol: TCP
+    port: 3306
+    targetPort: 3306
+  type: ClusterIP
+
+---
+
+# ----------------------------------------------
+# Backend Service (Internal)
+# ----------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  selector:
+    app: backend
+  ports:
+  - protocol: TCP
+    port: 5000
+    targetPort: 5000
+  type: ClusterIP
+
+---
+
+# ----------------------------------------------
+# Frontend Service (Public LoadBalancer)
+# ----------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  selector:
+    app: frontend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: LoadBalancer
