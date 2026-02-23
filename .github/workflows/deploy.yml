@@ -1,4 +1,4 @@
-name: Build and Push All Images to ONE ECR Repo
+name: Build and Push All Images to One ECR Repo
 
 on:
   push:
