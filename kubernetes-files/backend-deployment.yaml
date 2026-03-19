@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: 066380524960.dkr.ecr.eu-north-1.amazonaws.com/backend:2
+        image: 066380524960.dkr.ecr.eu-north-1.amazonaws.com/backend:1
         ports:
         - containerPort: 80
         env:
