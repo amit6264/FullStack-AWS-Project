@@ -1,26 +1,26 @@
-name: Build and Push all Images to One ECR Repo
+name: Build & Push Frontend + Backend to ECR
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
 
 jobs:
   build-and-push:
+    name: Build and Push Images to ECR
     runs-on: ubuntu-latest
 
     env:
-      AWS_REGION: eu-north-1
-      ECR_REPOSITORY: fullstack-repo
-      ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-north-1.amazonaws.com
+      AWS_REGION: ap-south-1          # change if needed
+      FRONTEND_REPO: frontend
+      BACKEND_REPO: backend
 
     steps:
-    - name: Checkout Code
+    - name: Checkout code
       uses: actions/checkout@v4
 
-    # ------------------------------
-    # AWS Login
-    # ------------------------------
+    # -------------------------
+    # Configure AWS Credentials
+    # -------------------------
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -28,38 +28,54 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    - name: Login to ECR
+    # -------------------------
+    # Create ECR repos (Auto)
+    # -------------------------
+    - name: Create ECR repositories
+      run: |
+        aws ecr describe-repositories --repository-names $FRONTEND_REPO || \
+        aws ecr create-repository --repository-name $FRONTEND_REPO
+        
+        aws ecr describe-repositories --repository-names $BACKEND_REPO || \
+        aws ecr create-repository --repository-name $BACKEND_REPO
+
+    # -------------------------
+    # Login to Amazon ECR
+    # -------------------------
+    - name: Login to Amazon ECR
+      id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
-    # ------------------------------
-    # Build & Push Frontend
-    # ------------------------------
-    - name: Build Frontend Image
+    # -------------------------
+    # Build Backend Image
+    # -------------------------
+    - name: Build Backend Docker Image
       run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:frontend ./client
+        docker build -t $BACKEND_REPO ./backend
 
-    - name: Push Frontend Image
+    - name: Tag Backend Image
       run: |
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend
-
-    # ------------------------------
-    # Build & Push Backend
-    # ------------------------------
-    - name: Build Backend Image
-      run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:backend ./backend
+        docker tag $BACKEND_REPO:latest \
+        ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$BACKEND_REPO:latest
 
     - name: Push Backend Image
       run: |
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:backend
+        docker push \
+        ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$BACKEND_REPO:latest
 
-    # ------------------------------
-    # Build & Push MySQL
-    # ------------------------------
-    - name: Build MySQL Image
+    # -------------------------
+    # Build Frontend Image
+    # -------------------------
+    - name: Build Frontend Docker Image
       run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:mysql ./mysql
+        docker build -t $FRONTEND_REPO ./client
 
-    - name: Push MySQL Image
+    - name: Tag Frontend Image
       run: |
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:mysql
+        docker tag $FRONTEND_REPO:latest \
+        ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$FRONTEND_REPO:latest
+
+    - name: Push Frontend Image
+      run: |
+        docker push \
+        ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/$FRONTEND_REPO:latest
