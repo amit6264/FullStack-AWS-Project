@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      AWS_REGION: ap-south-1          # change if needed
+      AWS_REGION: eu-north-1          # change if needed
       FRONTEND_REPO: frontend
       BACKEND_REPO: backend
 
